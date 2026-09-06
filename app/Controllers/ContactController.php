@@ -9,16 +9,14 @@ class ContactController extends BaseController
 {
     public function index(): string
     {
-        $a = random_int(2, 12);
-        $b = random_int(2, 12);
-        session()->set('captcha_answer', $a + $b);
+        $recaptchaSiteKey = trim((string) (env('RECAPTCHA_SITE_KEY') ?: getenv('RECAPTCHA_SITE_KEY') ?: ''));
 
         return view('site/pages/contato', [
             'seo' => [
                 'title'       => 'ONG SRD | Contato',
                 'description' => 'Entre em contato com a ONG SRD. Respondemos denúncias, dúvidas e mensagens de doação.',
             ],
-            'captchaQuestion' => "Quanto é {$a} + {$b}?",
+            'recaptchaSiteKey' => $recaptchaSiteKey,
         ]);
     }
 
@@ -39,16 +37,12 @@ class ContactController extends BaseController
             return redirect()->to(base_url('contato'));
         }
 
-        // ── Math captcha ───────────────────────────────────────────────
-        $submitted = (int) $this->request->getPost('captcha');
-        $expected  = (int) session()->get('captcha_answer');
-
-        if ($expected === 0 || $submitted !== $expected) {
+        // ── Google reCAPTCHA ───────────────────────────────────────────
+        $recaptchaToken = trim((string) $this->request->getPost('g-recaptcha-response'));
+        if (! $this->verifyRecaptcha($recaptchaToken)) {
             return redirect()->back()->withInput()
-                ->with('error', 'Resposta incorreta na verificação anti-robô. Tente novamente.');
+            ->with('error', 'Falha na verificação anti-robô. Tente novamente.');
         }
-
-        session()->remove('captcha_answer');
 
         // ── Validation ─────────────────────────────────────────────────
         if (! $this->validate([
@@ -117,6 +111,35 @@ class ContactController extends BaseController
             $mail->send();
         } catch (\Exception $e) {
             log_message('error', '[ContactController] PHPMailer: ' . $e->getMessage());
+        }
+    }
+
+    private function verifyRecaptcha(string $token): bool
+    {
+        $secretKey = trim((string) (env('RECAPTCHA_SECRET_KEY') ?: getenv('RECAPTCHA_SECRET_KEY') ?: ''));
+
+        if ($secretKey === '' || $token === '') {
+            return false;
+        }
+
+        try {
+            $response = \Config\Services::curlrequest()->post(
+                'https://www.google.com/recaptcha/api/siteverify',
+                [
+                    'form_params' => [
+                        'secret'   => $secretKey,
+                        'response' => $token,
+                        'remoteip' => (string) $this->request->getIPAddress(),
+                    ],
+                    'timeout' => 8,
+                ]
+            );
+
+            $body = json_decode($response->getBody(), true);
+            return is_array($body) && ! empty($body['success']);
+        } catch (\Throwable $e) {
+            log_message('error', '[ContactController] reCAPTCHA: ' . $e->getMessage());
+            return false;
         }
     }
 }

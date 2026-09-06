@@ -1,8 +1,4 @@
 .news-page {
-    background:
-        radial-gradient(1000px 320px at -8% -10%, rgba(177, 50, 98, 0.14), transparent 60%),
-        radial-gradient(980px 340px at 108% 110%, rgba(240, 137, 182, 0.16), transparent 58%),
-        #fff;
 }
 
 .news-header {

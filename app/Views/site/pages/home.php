@@ -43,20 +43,6 @@ if ($heroBanners === []) {
 }
 
 if ($heroBanners === []) {
-    $uploadDir = FCPATH . 'uploads/home-page';
-    if (is_dir($uploadDir)) {
-        $files = glob($uploadDir . '/*.{jpg,jpeg,png,webp,gif,JPG,JPEG,PNG,WEBP,GIF}', GLOB_BRACE) ?: [];
-        foreach ($files as $file) {
-            $heroBanners[] = [
-                'image' => base_url('uploads/home-page/' . basename($file)),
-                'link' => null,
-                'title' => '',
-            ];
-        }
-    }
-}
-
-if ($heroBanners === []) {
     $heroBanners = [[
         'image' => base_url('assets/site/home-banner.jpg'),
         'link' => null,

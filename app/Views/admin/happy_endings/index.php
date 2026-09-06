@@ -12,7 +12,7 @@
         <?php foreach ($items as $row): ?>
             <tr>
                 <td><?= esc((string) $row['title']) ?></td>
-                <td><?php if (! empty($row['image'])): ?><img src="<?= base_url($row['image']) ?>" class="thumb" alt=""><?php endif; ?></td>
+                <td><?php if (! empty($row['image'])): ?><img src="<?= base_url((string) ($row['image_thumb'] ?: $row['image'])) ?>" class="thumb" alt=""><?php endif; ?></td>
                 <td class="actions">
                     <a class="link" href="<?= base_url('cms/happy-endings/edit/' . $row['id']) ?>"><i class="fa-solid fa-pen"></i>Editar</a>
                     <form method="post" action="<?= base_url('cms/happy-endings/delete/' . $row['id']) ?>" class="inline" onsubmit="return confirm('Excluir esta história?');">

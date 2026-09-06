@@ -17,6 +17,8 @@ $routes->get('/noticias', 'NewsController::list');
 $routes->get('/noticias/(:segment)', 'NewsController::details/$1');
 $routes->get('/adotar', 'PetController::list');
 $routes->get('/adotar/(:segment)', 'PetController::details/$1');
+$routes->get('uploads/(:segment)/(:segment)', 'MediaController::show/$1/$2');
+$routes->head('uploads/(:segment)/(:segment)', 'MediaController::show/$1/$2');
 
 $routes->get('cms', static function () {
 	if (auth()->loggedIn()) {

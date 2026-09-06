@@ -23,7 +23,7 @@
                     <td><?= esc((string) ($row['title'] ?? 'Banner')) ?></td>
                     <td>
                         <?php if (! empty($row['image'])): ?>
-                            <img src="<?= base_url((string) $row['image']) ?>" class="thumb" alt="Banner">
+                            <img src="<?= base_url((string) ($row['image_thumb'] ?: $row['image'])) ?>" class="thumb" alt="Banner">
                         <?php endif; ?>
                     </td>
                     <td>

@@ -69,7 +69,7 @@ $sizeLabel   = $sizeLabels[$pet['size'] ?? ''] ?? ($pet['size'] ?? '');
                 <a href="<?= base_url('contato') ?>" class="adopt-cta-btn">
                     <i class="fa-solid fa-heart" aria-hidden="true"></i> Tenho Interesse em Adotar
                 </a>
-
+                <br>
                 <a href="<?= base_url('adotar') ?>" class="link back-link">← Ver outros pets</a>
             </div>
         </div>

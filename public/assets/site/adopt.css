@@ -124,6 +124,7 @@
     height: 15px;
     flex-shrink: 0;
     cursor: pointer;
+    margin: 0px 3px 0 0;
 }
 
 .apply-filters-btn {
@@ -142,6 +143,7 @@
     justify-content: center;
     gap: 0.5rem;
     transition: background 0.2s;
+    box-sizing: border-box;
 }
 
 .apply-filters-btn:hover {
@@ -429,7 +431,7 @@
 }
 
 .back-link {
-    display: block;
+    display: inline-block;
     font-size: 0.95rem;
 }
 

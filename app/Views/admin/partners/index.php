@@ -21,7 +21,7 @@
             <?php foreach ($items as $row): ?>
                 <tr>
                     <td><?= esc((string) $row['name']) ?></td>
-                    <td><?php if (! empty($row['image'])): ?><img src="<?= base_url($row['image']) ?>" class="thumb" alt=""><?php endif; ?></td>
+                    <td><?php if (! empty($row['image'])): ?><img src="<?= base_url((string) ($row['image_thumb'] ?: $row['image'])) ?>" class="thumb" alt=""><?php endif; ?></td>
                     <td>
                         <?php if (! empty($row['link_url'])): ?>
                             <a class="link" href="<?= esc((string) $row['link_url'], 'attr') ?>" target="_blank" rel="noopener">Abrir</a>

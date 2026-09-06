@@ -28,7 +28,7 @@
         autoProcessQueue: false,
         maxFiles: 1,
         acceptedFiles: 'image/*',
-        paramName: 'file',
+        paramName: 'image',
         addRemoveLinks: true,
         init: function() {
             form.addEventListener('submit', (e) => {

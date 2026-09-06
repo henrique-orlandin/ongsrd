@@ -55,9 +55,13 @@ class PartnersController extends AdminBaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $image = $this->uploadImage('image', 'partners');
+
         (new PartnerModel())->insert([
             'name' => (string) $this->request->getPost('name'),
-            'image' => $this->uploadImage('image', 'partners'),
+            'image' => $image['desktop'] ?? null,
+            'image_mobile' => $image['mobile'] ?? null,
+            'image_thumb' => $image['thumb'] ?? null,
             'link_url' => $normalizedLink,
             'sort_order' => (int) ($this->request->getPost('sort_order') ?: 0),
             'is_active' => $this->request->getPost('is_active') ? 1 : 0,
@@ -135,14 +139,16 @@ class PartnersController extends AdminBaseController
 
         $model->update($id, [
             'name' => (string) $this->request->getPost('name'),
-            'image' => $newImage ?? $item['image'],
+            'image' => $newImage['desktop'] ?? $item['image'],
+            'image_mobile' => $newImage['mobile'] ?? $item['image_mobile'],
+            'image_thumb' => $newImage['thumb'] ?? $item['image_thumb'],
             'link_url' => $normalizedLink,
             'sort_order' => (int) ($this->request->getPost('sort_order') ?: 0),
             'is_active' => $this->request->getPost('is_active') ? 1 : 0,
         ]);
 
         if ($newImage !== null) {
-            $this->removeImage($item['image']);
+            $this->removeImageSet([$item['image'], $item['image_mobile'], $item['image_thumb']]);
         }
 
         if ($this->request->isAJAX()) {
@@ -161,7 +167,7 @@ class PartnersController extends AdminBaseController
         $item = $model->find($id);
 
         if ($item !== null) {
-            $this->removeImage($item['image']);
+            $this->removeImageSet([$item['image'], $item['image_mobile'], $item['image_thumb']]);
             $model->delete($id);
         }
 

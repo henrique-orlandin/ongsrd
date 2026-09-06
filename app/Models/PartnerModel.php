@@ -10,6 +10,6 @@ class PartnerModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $protectFields = true;
-    protected $allowedFields = ['name', 'image', 'link_url', 'sort_order', 'is_active'];
+    protected $allowedFields = ['name', 'image', 'image_mobile', 'image_thumb', 'link_url', 'sort_order', 'is_active'];
     protected $useTimestamps = true;
 }

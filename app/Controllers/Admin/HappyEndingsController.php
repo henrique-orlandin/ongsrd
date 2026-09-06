@@ -37,10 +37,14 @@ class HappyEndingsController extends AdminBaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $image = $this->uploadImage('image', 'happy-endings');
+
         (new HappyEndingModel())->insert([
             'title' => (string) $this->request->getPost('title'),
             'description' => (string) $this->request->getPost('description'),
-            'image' => $this->uploadImage('image', 'happy-endings'),
+            'image' => $image['desktop'] ?? null,
+            'image_mobile' => $image['mobile'] ?? null,
+            'image_thumb' => $image['thumb'] ?? null,
         ]);
 
         if ($this->request->isAJAX()) {
@@ -101,11 +105,13 @@ class HappyEndingsController extends AdminBaseController
         $model->update($id, [
             'title' => (string) $this->request->getPost('title'),
             'description' => (string) $this->request->getPost('description'),
-            'image' => $newImage ?? $item['image'],
+            'image' => $newImage['desktop'] ?? $item['image'],
+            'image_mobile' => $newImage['mobile'] ?? $item['image_mobile'],
+            'image_thumb' => $newImage['thumb'] ?? $item['image_thumb'],
         ]);
 
         if ($newImage !== null) {
-            $this->removeImage($item['image']);
+            $this->removeImageSet([$item['image'], $item['image_mobile'], $item['image_thumb']]);
         }
 
         if ($this->request->isAJAX()) {
@@ -124,7 +130,7 @@ class HappyEndingsController extends AdminBaseController
         $item = $model->find($id);
 
         if ($item !== null) {
-            $this->removeImage($item['image']);
+            $this->removeImageSet([$item['image'], $item['image_mobile'], $item['image_thumb']]);
             $model->delete($id);
         }
 

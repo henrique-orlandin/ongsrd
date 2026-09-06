@@ -76,9 +76,15 @@
     color: var(--brand);
 }
 
-.captcha-group input {
-    max-width: 140px;
+.captcha-widget {
     margin-top: 0.4rem;
+}
+
+.captcha-config-warning {
+    margin: 0.4rem 0 0;
+    color: #991b1b;
+    font-size: 0.93rem;
+    line-height: 1.4;
 }
 
 /* Submit */

@@ -21,7 +21,7 @@ class AboutController extends AdminBaseController
         $rules = [
             'title' => 'required|max_length[180]',
             'description' => 'required',
-            'file' => 'if_exist|is_image[file]|max_size[file,4096]',
+            'image' => 'if_exist|is_image[image]|max_size[image,4096]',
         ];
 
         if (! $this->validate($rules)) {
@@ -35,14 +35,16 @@ class AboutController extends AdminBaseController
             }
         }
 
-        $newImage = $this->uploadImage('file', 'about');
+        $newImage = $this->uploadImage('image', 'about');
         $payload = [
             'title' => (string) $this->request->getPost('title'),
             'description' => (string) $this->request->getPost('description'),
         ];
 
         if ($newImage !== null) {
-            $payload['image'] = $newImage;
+            $payload['image'] = $newImage['desktop'];
+            $payload['image_mobile'] = $newImage['mobile'];
+            $payload['image_thumb'] = $newImage['thumb'];
         }
 
         if ($item === null) {
@@ -50,12 +52,14 @@ class AboutController extends AdminBaseController
         } else {
             if ($newImage === null) {
                 $payload['image'] = $item['image'];
+                $payload['image_mobile'] = $item['image_mobile'];
+                $payload['image_thumb'] = $item['image_thumb'];
             }
 
             $model->update($item['id'], $payload);
 
             if ($newImage !== null) {
-                $this->removeImage($item['image']);
+                $this->removeImageSet([$item['image'], $item['image_mobile'], $item['image_thumb']]);
             }
         }
 

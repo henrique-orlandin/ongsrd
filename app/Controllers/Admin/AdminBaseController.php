@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Libraries\ImageProcessor;
 use App\Models\ContactMessageModel;
 
 abstract class AdminBaseController extends BaseController
@@ -23,7 +24,13 @@ abstract class AdminBaseController extends BaseController
         }
     }
 
-    protected function uploadImage(string $inputName, string $folder): ?string
+    /**
+     * Processes an uploaded image into thumb/mobile/desktop AVIF variants and
+     * stores them under writable/uploads/{$folder}.
+     *
+     * @return array{thumb: string, mobile: string, desktop: string}|null relative "uploads/..." paths, or null if no valid file was uploaded
+     */
+    protected function uploadImage(string $inputName, string $folder): ?array
     {
         $file = $this->request->getFile($inputName);
 
@@ -31,16 +38,23 @@ abstract class AdminBaseController extends BaseController
             return null;
         }
 
-        $target = ROOTPATH . 'public/uploads/' . trim($folder, '/');
+        $folder = trim($folder, '/');
+        $target = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . $folder;
+        $baseName = bin2hex(random_bytes(8));
 
-        if (! is_dir($target)) {
-            mkdir($target, 0775, true);
+        try {
+            $variants = (new ImageProcessor())->process($file->getTempName(), $target, $baseName);
+        } catch (\Throwable $e) {
+            log_message('error', 'Falha ao processar imagem enviada: {msg}', ['msg' => $e->getMessage()]);
+
+            return null;
         }
 
-        $name = $file->getRandomName();
-        $file->move($target, $name);
-
-        return 'uploads/' . trim($folder, '/') . '/' . $name;
+        return [
+            'thumb'   => 'uploads/' . $folder . '/' . $variants['thumb'],
+            'mobile'  => 'uploads/' . $folder . '/' . $variants['mobile'],
+            'desktop' => 'uploads/' . $folder . '/' . $variants['desktop'],
+        ];
     }
 
     protected function removeImage(?string $path): void
@@ -49,10 +63,20 @@ abstract class AdminBaseController extends BaseController
             return;
         }
 
-        $fullPath = ROOTPATH . 'public/' . ltrim($path, '/');
+        $fullPath = WRITEPATH . ltrim($path, '/\\');
 
         if (is_file($fullPath)) {
             unlink($fullPath);
+        }
+    }
+
+    /**
+     * @param array<string, string|null>|null $paths
+     */
+    protected function removeImageSet(?array $paths): void
+    {
+        foreach ((array) $paths as $path) {
+            $this->removeImage($path);
         }
     }
 }

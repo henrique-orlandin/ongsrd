@@ -9,8 +9,6 @@ use App\Models\HowToHelpModel;
 use App\Models\NewsImageModel;
 use App\Models\NewsModel;
 use App\Models\PartnerModel;
-use App\Models\PetImageModel;
-use App\Models\PetModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
 class HomeController extends BaseController
@@ -86,39 +84,6 @@ class HomeController extends BaseController
                 'description' => 'Pagina institucional da ONG SRD.',
             ],
         ]);
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $pets
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function attachPetThumbnails(array $pets): array
-    {
-        if ($pets === []) {
-            return $pets;
-        }
-
-        $imageModel = new PetImageModel();
-
-        foreach ($pets as &$pet) {
-            $thumbnail = $imageModel
-                ->where('pet_id', (int) $pet['id'])
-                ->where('is_thumbnail', 1)
-                ->first();
-
-            if ($thumbnail === null) {
-                $thumbnail = $imageModel
-                    ->where('pet_id', (int) $pet['id'])
-                    ->orderBy('sort_order', 'ASC')
-                    ->first();
-            }
-
-            $pet['thumbnail'] = $thumbnail['image_path'] ?? null;
-        }
-        unset($pet);
-
-        return $pets;
     }
 
     /**

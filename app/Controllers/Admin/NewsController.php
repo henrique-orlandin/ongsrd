@@ -2,6 +2,7 @@
 
 namespace App\Controllers\Admin;
 
+use App\Libraries\ImageProcessor;
 use App\Libraries\SlugGenerator;
 use App\Models\NewsImageModel;
 use App\Models\NewsModel;
@@ -9,6 +10,9 @@ use CodeIgniter\Exceptions\PageNotFoundException;
 
 class NewsController extends AdminBaseController
 {
+    private const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    private const MAX_FILE_SIZE_KB = 4096;
+
     public function index()
     {
         $items = (new NewsModel())
@@ -30,7 +34,7 @@ class NewsController extends AdminBaseController
                     ->first();
             }
 
-            $item['main_image'] = $mainImage['image_path'] ?? null;
+            $item['main_image'] = $mainImage['image_path_thumb'] ?? $mainImage['image_path'] ?? null;
         }
         unset($item);
 
@@ -206,10 +210,10 @@ class NewsController extends AdminBaseController
 
         $images = $imageModel->where('news_id', $id)->findAll();
         foreach ($images as $image) {
-            $this->removeImage((string) $image['image_path']);
+            $this->removeImageSet([$image['image_path'], $image['image_path_mobile'], $image['image_path_thumb']]);
         }
 
-        $imageModel->where('news_id', $id)->delete();
+        // news_images rows cascade-delete automatically (FK ON DELETE CASCADE).
         $model->delete($id);
 
         return redirect()->to('/cms/noticias')->with('message', 'Noticia excluida.');
@@ -222,7 +226,7 @@ class NewsController extends AdminBaseController
 
         if ($image !== null) {
             $wasMain = (int) $image['is_main'] === 1;
-            $this->removeImage((string) $image['image_path']);
+            $this->removeImageSet([$image['image_path'], $image['image_path_mobile'], $image['image_path_thumb']]);
             $imageModel->delete($imageId);
 
             if ($wasMain) {
@@ -257,6 +261,13 @@ class NewsController extends AdminBaseController
         return $this->response->setJSON(['success' => true]);
     }
 
+    /**
+     * Validates every file first, then processes (resizes + converts) all of
+     * them, and only writes to the database inside a transaction. Any file
+     * already written to disk during this call is cleaned up on failure, so
+     * a bad file in the middle of a batch can no longer leave orphaned files
+     * or a half-populated gallery behind.
+     */
     private function saveGallery(int $newsId, int $existingCount = 0, bool $requireAtLeastOne = false): ?string
     {
         $files = $this->request->getFileMultiple('images');
@@ -271,9 +282,19 @@ class NewsController extends AdminBaseController
 
         $validFiles = [];
         foreach ($files as $file) {
-            if ($file->isValid() && ! $file->hasMoved()) {
-                $validFiles[] = $file;
+            if (! $file->isValid() || $file->hasMoved()) {
+                continue;
             }
+
+            if (! in_array($file->getMimeType(), self::ALLOWED_MIME, true)) {
+                return 'Apenas arquivos de imagem sao permitidos na galeria.';
+            }
+
+            if ($file->getSize() > self::MAX_FILE_SIZE_KB * 1024) {
+                return 'Cada imagem deve ter no maximo 4MB.';
+            }
+
+            $validFiles[] = $file;
         }
 
         if ($validFiles === []) {
@@ -288,34 +309,61 @@ class NewsController extends AdminBaseController
             return 'Cada noticia suporta no maximo 10 imagens.';
         }
 
-        $target = ROOTPATH . 'public/uploads/news';
-        if (! is_dir($target)) {
-            mkdir($target, 0775, true);
+        $target = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'news';
+        $processor = new ImageProcessor();
+        $processedBatches = [];
+
+        try {
+            foreach ($validFiles as $file) {
+                $baseName = bin2hex(random_bytes(8));
+                $processedBatches[] = $processor->process($file->getTempName(), $target, $baseName);
+            }
+        } catch (\Throwable $e) {
+            $this->cleanupBatch('news', $processedBatches);
+            log_message('error', 'Falha ao processar galeria de noticia: {msg}', ['msg' => $e->getMessage()]);
+
+            return 'Nao foi possivel processar uma das imagens enviadas.';
         }
 
         $imageModel = new NewsImageModel();
+        $db = \Config\Database::connect();
+        $db->transStart();
+
         $order = $existingCount;
-
-        foreach ($validFiles as $file) {
-            if (! in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true)) {
-                return 'Apenas arquivos de imagem sao permitidos na galeria.';
-            }
-
-            $name = $file->getRandomName();
-            $file->move($target, $name);
-
+        foreach ($processedBatches as $variants) {
             $imageModel->insert([
-                'news_id' => $newsId,
-                'image_path' => 'uploads/news/' . $name,
-                'sort_order' => $order,
-                'is_main' => $order === 0 && $existingCount === 0 ? 1 : 0,
-                'created_at' => date('Y-m-d H:i:s'),
+                'news_id'           => $newsId,
+                'image_path'        => 'uploads/news/' . $variants['desktop'],
+                'image_path_mobile' => 'uploads/news/' . $variants['mobile'],
+                'image_path_thumb'  => 'uploads/news/' . $variants['thumb'],
+                'sort_order'        => $order,
+                'is_main'           => $order === 0 && $existingCount === 0 ? 1 : 0,
+                'created_at'        => date('Y-m-d H:i:s'),
             ]);
-
             $order++;
         }
 
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            $this->cleanupBatch('news', $processedBatches);
+
+            return 'Nao foi possivel salvar as imagens da galeria.';
+        }
+
         return null;
+    }
+
+    /**
+     * @param array<int, array<string, string>> $batches
+     */
+    private function cleanupBatch(string $folder, array $batches): void
+    {
+        foreach ($batches as $variants) {
+            foreach ($variants as $filename) {
+                $this->removeImage('uploads/' . $folder . '/' . $filename);
+            }
+        }
     }
 
     private function normalizePublishedAt(string $raw): ?string

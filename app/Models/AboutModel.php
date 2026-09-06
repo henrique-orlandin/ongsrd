@@ -10,6 +10,6 @@ class AboutModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $protectFields = true;
-    protected $allowedFields = ['title', 'description', 'image'];
+    protected $allowedFields = ['title', 'description', 'image', 'image_mobile', 'image_thumb'];
     protected $useTimestamps = true;
 }

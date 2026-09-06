@@ -10,6 +10,6 @@ class BannerModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $protectFields = true;
-    protected $allowedFields = ['title', 'image', 'link_url', 'sort_order', 'is_active'];
+    protected $allowedFields = ['title', 'image', 'image_mobile', 'image_thumb', 'link_url', 'sort_order', 'is_active'];
     protected $useTimestamps = true;
 }

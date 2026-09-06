@@ -42,7 +42,9 @@ class HowToHelpController extends AdminBaseController
         ];
 
         if ($newImage !== null) {
-            $payload['image'] = $newImage;
+            $payload['image'] = $newImage['desktop'];
+            $payload['image_mobile'] = $newImage['mobile'];
+            $payload['image_thumb'] = $newImage['thumb'];
         }
 
         if ($item === null) {
@@ -50,12 +52,14 @@ class HowToHelpController extends AdminBaseController
         } else {
             if ($newImage === null) {
                 $payload['image'] = $item['image'];
+                $payload['image_mobile'] = $item['image_mobile'];
+                $payload['image_thumb'] = $item['image_thumb'];
             }
 
             $model->update($item['id'], $payload);
 
             if ($newImage !== null) {
-                $this->removeImage($item['image']);
+                $this->removeImageSet([$item['image'], $item['image_mobile'], $item['image_thumb']]);
             }
         }
 

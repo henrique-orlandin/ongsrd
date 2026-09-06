@@ -10,6 +10,6 @@ class NewsImageModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $protectFields = true;
-    protected $allowedFields = ['news_id', 'image_path', 'sort_order', 'is_main', 'created_at'];
+    protected $allowedFields = ['news_id', 'image_path', 'image_path_mobile', 'image_path_thumb', 'sort_order', 'is_main', 'created_at'];
     protected $useTimestamps = false;
 }

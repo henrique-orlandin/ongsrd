@@ -2,12 +2,16 @@
 
 namespace App\Controllers\Admin;
 
+use App\Libraries\ImageProcessor;
 use App\Libraries\SlugGenerator;
 use App\Models\PetImageModel;
 use App\Models\PetModel;
 
 class PetsController extends AdminBaseController
 {
+    private const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    private const MAX_FILE_SIZE_KB = 4096;
+
     public function index()
     {
         $pets = (new PetModel())->orderBy('id', 'DESC')->findAll();
@@ -15,7 +19,7 @@ class PetsController extends AdminBaseController
         $imageModel = new PetImageModel();
         foreach ($pets as &$pet) {
             $thumb = $imageModel->where('pet_id', $pet['id'])->where('is_thumbnail', 1)->first();
-            $pet['thumbnail'] = $thumb ? $thumb['image_path'] : null;
+            $pet['thumbnail'] = $thumb['image_path_thumb'] ?? $thumb['image_path'] ?? null;
         }
         unset($pet);
 
@@ -64,6 +68,8 @@ class PetsController extends AdminBaseController
         $petId = (int) $petModel->getInsertID();
         $error = $this->saveGallery($petId);
         if ($error !== null) {
+            $petModel->delete($petId);
+
             if ($this->request->isAJAX()) {
                 return $this->response->setJSON([
                     'success' => false,
@@ -174,10 +180,10 @@ class PetsController extends AdminBaseController
 
         $images = $imageModel->where('pet_id', $id)->findAll();
         foreach ($images as $image) {
-            $this->removeImage($image['image_path']);
+            $this->removeImageSet([$image['image_path'], $image['image_path_mobile'], $image['image_path_thumb']]);
         }
 
-        $imageModel->where('pet_id', $id)->delete();
+        // pet_images rows cascade-delete automatically (FK ON DELETE CASCADE).
         $petModel->delete($id);
 
         return redirect()->to('/cms/pets')->with('message', 'Pet excluído.');
@@ -190,7 +196,7 @@ class PetsController extends AdminBaseController
 
         if ($image !== null) {
             $wasThumbnail = (int) $image['is_thumbnail'] === 1;
-            $this->removeImage($image['image_path']);
+            $this->removeImageSet([$image['image_path'], $image['image_path_mobile'], $image['image_path_thumb']]);
             $imageModel->delete($imageId);
 
             if ($wasThumbnail) {
@@ -219,6 +225,13 @@ class PetsController extends AdminBaseController
         return $this->response->setJSON(['success' => true]);
     }
 
+    /**
+     * Validates every file first, then processes (resizes + converts) all of
+     * them, and only writes to the database inside a transaction. Any file
+     * already written to disk during this call is cleaned up on failure, so
+     * a bad file in the middle of a batch can no longer leave orphaned files
+     * or a half-populated gallery behind.
+     */
     private function saveGallery(int $petId, int $existingCount = 0): ?string
     {
         $files = $this->request->getFileMultiple('images');
@@ -229,9 +242,19 @@ class PetsController extends AdminBaseController
 
         $validFiles = [];
         foreach ($files as $file) {
-            if ($file->isValid() && ! $file->hasMoved()) {
-                $validFiles[] = $file;
+            if (! $file->isValid() || $file->hasMoved()) {
+                continue;
             }
+
+            if (! in_array($file->getMimeType(), self::ALLOWED_MIME, true)) {
+                return 'Apenas arquivos de imagem sao permitidos na galeria.';
+            }
+
+            if ($file->getSize() > self::MAX_FILE_SIZE_KB * 1024) {
+                return 'Cada imagem deve ter no maximo 4MB.';
+            }
+
+            $validFiles[] = $file;
         }
 
         if ($validFiles === []) {
@@ -242,33 +265,60 @@ class PetsController extends AdminBaseController
             return 'A galeria do pet suporta no maximo 10 imagens.';
         }
 
-        $target = ROOTPATH . 'public/uploads/pets';
-        if (! is_dir($target)) {
-            mkdir($target, 0775, true);
+        $target = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'pets';
+        $processor = new ImageProcessor();
+        $processedBatches = [];
+
+        try {
+            foreach ($validFiles as $file) {
+                $baseName = bin2hex(random_bytes(8));
+                $processedBatches[] = $processor->process($file->getTempName(), $target, $baseName);
+            }
+        } catch (\Throwable $e) {
+            $this->cleanupBatch('pets', $processedBatches);
+            log_message('error', 'Falha ao processar galeria de pet: {msg}', ['msg' => $e->getMessage()]);
+
+            return 'Nao foi possivel processar uma das imagens enviadas.';
         }
 
         $imageModel = new PetImageModel();
+        $db = \Config\Database::connect();
+        $db->transStart();
+
         $order = $existingCount;
-
-        foreach ($validFiles as $file) {
-            if (! in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true)) {
-                return 'Apenas arquivos de imagem sao permitidos na galeria.';
-            }
-
-            $name = $file->getRandomName();
-            $file->move($target, $name);
-
+        foreach ($processedBatches as $variants) {
             $imageModel->insert([
-                'pet_id'       => $petId,
-                'image_path'   => 'uploads/pets/' . $name,
-                'sort_order'   => $order,
-                'is_thumbnail' => $order === 0 && $existingCount === 0 ? 1 : 0,
-                'created_at'   => date('Y-m-d H:i:s'),
+                'pet_id'             => $petId,
+                'image_path'         => 'uploads/pets/' . $variants['desktop'],
+                'image_path_mobile'  => 'uploads/pets/' . $variants['mobile'],
+                'image_path_thumb'   => 'uploads/pets/' . $variants['thumb'],
+                'sort_order'         => $order,
+                'is_thumbnail'       => $order === 0 && $existingCount === 0 ? 1 : 0,
+                'created_at'         => date('Y-m-d H:i:s'),
             ]);
-
             $order++;
         }
 
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            $this->cleanupBatch('pets', $processedBatches);
+
+            return 'Nao foi possivel salvar as imagens da galeria.';
+        }
+
         return null;
+    }
+
+    /**
+     * @param array<int, array<string, string>> $batches
+     */
+    private function cleanupBatch(string $folder, array $batches): void
+    {
+        foreach ($batches as $variants) {
+            foreach ($variants as $filename) {
+                $this->removeImage('uploads/' . $folder . '/' . $filename);
+            }
+        }
     }
 }

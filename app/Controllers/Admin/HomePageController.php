@@ -40,7 +40,9 @@ class HomePageController extends AdminBaseController
         ];
 
         if ($newImage !== null) {
-            $payload['image'] = $newImage;
+            $payload['image'] = $newImage['desktop'];
+            $payload['image_mobile'] = $newImage['mobile'];
+            $payload['image_thumb'] = $newImage['thumb'];
         }
 
         if ($item === null) {
@@ -48,7 +50,7 @@ class HomePageController extends AdminBaseController
         } else {
             $model->update($item['id'], $payload);
             if ($newImage !== null) {
-                $this->removeImage($item['image']);
+                $this->removeImageSet([$item['image'], $item['image_mobile'], $item['image_thumb']]);
             }
         }
 

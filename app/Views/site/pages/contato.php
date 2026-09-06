@@ -2,13 +2,16 @@
 
 <?= $this->section('head') ?>
 <link rel="stylesheet" href="<?= base_url('assets/site/contact.css') ?>">
+<?php if (! empty($recaptchaSiteKey ?? '')): ?>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<?php endif; ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <?php
 $success          = $success          ?? session()->getFlashdata('success');
 $error            = $error            ?? session()->getFlashdata('error');
-$captchaQuestion  = $captchaQuestion  ?? 'Quanto é ? + ??';
+$recaptchaSiteKey = trim((string) ($recaptchaSiteKey ?? ''));
 ?>
 
 <section class="contact-page" id="contato">
@@ -77,13 +80,13 @@ $captchaQuestion  = $captchaQuestion  ?? 'Quanto é ? + ??';
                     </div>
 
                     <div class="form-group captcha-group">
-                        <label for="ct-captcha">
-                            <i class="fa-solid fa-robot" aria-hidden="true"></i>
-                            Verificação: <?= esc($captchaQuestion) ?>
-                        </label>
-                        <input type="number" id="ct-captcha" name="captcha"
-                               required min="0" max="30" autocomplete="off"
-                               placeholder="Sua resposta">
+                        <?php if ($recaptchaSiteKey !== ''): ?>
+                            <div class="captcha-widget">
+                                <div class="g-recaptcha" data-sitekey="<?= esc($recaptchaSiteKey) ?>"></div>
+                            </div>
+                        <?php else: ?>
+                            <p class="captcha-config-warning">reCAPTCHA indisponível no momento. Tente novamente mais tarde.</p>
+                        <?php endif; ?>
                     </div>
 
                     <button type="submit" class="submit-btn">
