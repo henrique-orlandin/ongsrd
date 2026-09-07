@@ -43,6 +43,10 @@
                 <a href="<?= base_url('cms/noticias') ?>" class="<?= url_is('cms/noticias*') ? 'active' : '' ?>"><i class="fa-solid fa-newspaper"></i> Notícias</a>
                 <a href="<?= base_url('cms/partners') ?>" class="<?= url_is('cms/partners*') ? 'active' : '' ?>"><i class="fa-solid fa-handshake"></i> Parceiros</a>
                 <a href="<?= base_url('cms/contact-messages') ?>" class="<?= url_is('cms/contact-messages*') ? 'active' : '' ?>"><i class="fa-solid fa-envelope"></i> Mensagens</a>
+                <?php if (auth()->loggedIn() && auth()->user()->inGroup('super_admin')): ?>
+                    <a href="<?= base_url('cms/users') ?>" class="<?= url_is('cms/users*') ? 'active' : '' ?>"><i class="fa-solid fa-users"></i> Usuários</a>
+                    <a href="<?= base_url('cms/settings/maintenance') ?>" class="<?= url_is('cms/settings/maintenance*') ? 'active' : '' ?>"><i class="fa-solid fa-triangle-exclamation"></i> Manutenção</a>
+                <?php endif; ?>
             </nav>
         </aside>
 
@@ -50,6 +54,10 @@
             <header class="topbar">
                 <h1><?= esc($title ?? 'CMS') ?></h1>
                 <div class="topbar-right">
+                    <a class="bell" target="_blank" href="<?= base_url('/') ?>">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>Site</span>
+                    </a>
                     <a class="bell" href="<?= base_url('cms/contact-messages') ?>">
                         <i class="fa-solid fa-envelope"></i>
                         <span>Mensagens</span>
@@ -64,6 +72,16 @@
                     <a class="logout" href="<?= base_url('cms/logout') ?>"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
                 </div>
             </header>
+
+            <?php if (! empty($maintenanceEnabled)): ?>
+                <div class="maintenance-banner">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Modo de manutenção ativo: o site só está visível para quem está logado no CMS.
+                    <?php if (auth()->loggedIn() && auth()->user()->inGroup('super_admin')): ?>
+                        <a href="<?= base_url('cms/settings/maintenance') ?>">Gerenciar</a>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
 
             <?php if (is_string($flashMessage) && $flashMessage !== ''): ?>
                 <div class="alert success"><i class="fa-solid fa-circle-check"></i> <?= esc($flashMessage) ?></div>

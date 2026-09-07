@@ -5,12 +5,14 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Libraries\ImageProcessor;
 use App\Models\ContactMessageModel;
+use App\Models\MaintenanceSettingModel;
 
 abstract class AdminBaseController extends BaseController
 {
     protected function render(string $view, array $data = []): string
     {
         $data['unreadMessageCount'] = $this->getUnreadMessageCount();
+        $data['maintenanceEnabled'] = $this->isMaintenanceEnabled();
 
         return view($view, $data);
     }
@@ -21,6 +23,17 @@ abstract class AdminBaseController extends BaseController
             return (new ContactMessageModel())->where('is_new', 1)->countAllResults();
         } catch (\Throwable) {
             return 0;
+        }
+    }
+
+    protected function isMaintenanceEnabled(): bool
+    {
+        try {
+            $settings = (new MaintenanceSettingModel())->first();
+
+            return $settings !== null && (int) $settings['is_enabled'] === 1;
+        } catch (\Throwable) {
+            return false;
         }
     }
 

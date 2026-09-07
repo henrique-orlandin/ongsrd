@@ -31,6 +31,16 @@ $routes->get('cms', static function () {
 $routes->group('cms', ['filter' => ['session', 'group:admin,super_admin']], static function ($routes) {
 	$routes->get('dashboard', 'Admin\\DashboardController::index');
 
+	$routes->get('settings/maintenance', 'Admin\\MaintenanceController::edit', ['filter' => 'group:super_admin']);
+	$routes->post('settings/maintenance', 'Admin\\MaintenanceController::update', ['filter' => 'group:super_admin']);
+
+	$routes->get('users', 'Admin\\UsersController::index', ['filter' => 'group:super_admin']);
+	$routes->get('users/new', 'Admin\\UsersController::new', ['filter' => 'group:super_admin']);
+	$routes->post('users/create', 'Admin\\UsersController::create', ['filter' => 'group:super_admin']);
+	$routes->get('users/edit/(:num)', 'Admin\\UsersController::edit/$1', ['filter' => 'group:super_admin']);
+	$routes->post('users/update/(:num)', 'Admin\\UsersController::update/$1', ['filter' => 'group:super_admin']);
+	$routes->post('users/delete/(:num)', 'Admin\\UsersController::delete/$1', ['filter' => 'group:super_admin']);
+
 	$routes->get('about', 'Admin\\AboutController::index');
 	$routes->post('about/update', 'Admin\\AboutController::update');
 

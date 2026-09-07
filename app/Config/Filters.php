@@ -17,6 +17,7 @@ use CodeIgniter\Shield\Filters\GroupFilter;
 use CodeIgniter\Shield\Filters\PermissionFilter;
 use CodeIgniter\Shield\Filters\SessionAuth;
 use CodeIgniter\Shield\Filters\TokenAuth;
+use App\Filters\MaintenanceFilter;
 
 class Filters extends BaseFilters
 {
@@ -44,6 +45,7 @@ class Filters extends BaseFilters
         'chain'         => ChainAuth::class,
         'group'         => GroupFilter::class,
         'permission'    => PermissionFilter::class,
+        'maintenance'   => MaintenanceFilter::class,
     ];
 
     /**
@@ -85,6 +87,7 @@ class Filters extends BaseFilters
             // 'honeypot',
             'csrf',
             // 'invalidchars',
+            'maintenance' => ['except' => ['cms', 'cms/*']],
         ],
         'after' => [
             // 'honeypot',
