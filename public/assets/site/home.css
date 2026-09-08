@@ -416,6 +416,7 @@ section .actions {
     width: 100%;
     height: 220px;
     object-fit: cover;
+    object-position: top;
     min-height: 220px;
     border-radius: 0.3rem 0.3rem 0 0;
     transition: transform 0.45s ease;

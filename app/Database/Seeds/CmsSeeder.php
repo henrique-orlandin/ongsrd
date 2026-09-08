@@ -41,6 +41,7 @@ class CmsSeeder extends Seeder
             'name' => 'Milo',
             'type' => 'Dog',
             'age' => 2,
+            'age_unit' => 'years',
             'size' => 'M',
             'gender' => 'Male',
             'description' => 'Friendly and playful dog looking for a forever home.',

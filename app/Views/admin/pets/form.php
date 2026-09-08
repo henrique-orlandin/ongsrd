@@ -17,6 +17,13 @@
                 </select>
             </label>
             <label> Idade <input type="number" min="0" name="age" value="<?= esc((string) old('age', $item['age'] ?? 0)) ?>" required></label>
+            <?php $currentAgeUnit = old('age_unit', $item['age_unit'] ?? 'years'); ?>
+            <label>Unidade
+                <select name="age_unit" required>
+                    <option value="years" <?= $currentAgeUnit === 'years' ? 'selected' : '' ?>>Anos</option>
+                    <option value="months" <?= $currentAgeUnit === 'months' ? 'selected' : '' ?>>Meses (filhote)</option>
+                </select>
+            </label>
         </div>
         <div class="form-row">
             <label>Porte

@@ -6,12 +6,13 @@
 
 <?= $this->section('content') ?>
 <?php
+helper('pet');
 $pet       = $pet       ?? [];
 $images    = $images    ?? [];
 $thumbnail = $thumbnail ?? null;
 
 $genderLabel = ($pet['gender'] ?? '') === 'M' ? 'Macho' : 'Fêmea';
-$ageLabel    = ((int)($pet['age'] ?? 0)) === 1 ? '1 ano' : ((int)($pet['age'] ?? 0)) . ' anos';
+$ageLabel    = pet_age_label((int) ($pet['age'] ?? 0), (string) ($pet['age_unit'] ?? 'years'));
 $sizeLabels  = ['P'=>'Pequeno','M'=>'Médio','G'=>'Grande','GG'=>'Extra grande'];
 $sizeLabel   = $sizeLabels[$pet['size'] ?? ''] ?? ($pet['size'] ?? '');
 ?>

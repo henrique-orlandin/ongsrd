@@ -10,6 +10,6 @@ class PetModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $protectFields = true;
-    protected $allowedFields = ['name', 'type', 'age', 'size', 'gender', 'description', 'slug'];
+    protected $allowedFields = ['name', 'type', 'age', 'age_unit', 'size', 'gender', 'description', 'slug'];
     protected $useTimestamps = true;
 }

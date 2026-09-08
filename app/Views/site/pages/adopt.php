@@ -6,6 +6,7 @@
 
 <?= $this->section('content') ?>
 <?php
+helper('pet');
 $pets    = $pets    ?? [];
 $filters = $filters ?? [];
 $f       = static fn(string $k) => $filters[$k] ?? '';
@@ -135,7 +136,7 @@ $total   = count($pets);
                                 $slug      = $pet['slug'] ?? '';
                                 $detailUrl = base_url($slug !== '' ? 'adotar/' . $slug : 'adotar');
                                 $genderLabel = $pet['gender'] === 'M' ? 'Macho' : 'Fêmea';
-                                $ageLabel    = $pet['age'] === 1 ? '1 ano' : $pet['age'] . ' anos';
+                                $ageLabel    = pet_age_label((int) $pet['age'], (string) ($pet['age_unit'] ?? 'years'));
                                 $sizeLabels  = ['P'=>'Pequeno','M'=>'Médio','G'=>'Grande','GG'=>'Extra grande'];
                                 $sizeLabel   = $sizeLabels[$pet['size']] ?? $pet['size'];
                             ?>

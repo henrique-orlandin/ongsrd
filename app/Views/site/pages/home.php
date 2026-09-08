@@ -144,14 +144,12 @@ $truncate = static function (string $text, int $max): string {
             <p class="section-tag">Quem Somos</p>
             <h2>ONG SRD</h2>
             <p>
-                Nascemos do inconformismo de pessoas que se recusaram a fechar os olhos para o sofrimento animal e doaram seu tempo para fazer o bem.
-                Atualmente somos uma organização que atua diariamente em averiguação de denúncias de crimes de maus-tratos.
+                <?= $homeSettings['description'] ?>
             </p>
-            <p>Nossa missão é simples: lutar por justiça para quem não tem voz.</p>
         </article>
         <figure class="about-image">
-            <?php if (! empty($aboutImage)): ?>
-                <img src="<?= esc((string) $aboutImage, 'attr') ?>" alt="Equipe ONG SRD">
+            <?php if (! empty($homeSettings['image'])): ?>
+                <img src="<?= esc((string) $homeSettings['image'], 'attr') ?>" alt="Equipe ONG SRD">
             <?php else: ?>
                 <div class="img-placeholder" aria-hidden="true"></div>
             <?php endif; ?>
@@ -234,7 +232,7 @@ $truncate = static function (string $text, int $max): string {
                         <?php endif; ?>
                         <div class="card-body">
                             <h3><?= esc((string) $article['title']) ?></h3>
-                            <p><?= esc($truncate((string) $article['description'], 140)) ?></p>
+                            <p><?= esc($truncate((string) strip_tags($article['description']), 140)) ?></p>
                             <a href="<?= base_url('noticias/' . ($article['slug'] ?? '')) ?>" class="link">Ler mais</a>
                         </div>
                     </article>

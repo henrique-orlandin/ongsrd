@@ -21,7 +21,7 @@
         </label>
 
         <label>Mensagem exibida aos visitantes (opcional)
-            <textarea name="message" rows="4" maxlength="500" placeholder="Ex: Estamos atualizando o site. Voltamos em breve!"><?= esc(old('message', $item['message'] ?? '')) ?></textarea>
+            <textarea name="message" rows="10" maxlength="500" placeholder="Ex: Estamos atualizando o site. Voltamos em breve!"><?= esc(old('message', $item['message'] ?? '')) ?></textarea>
         </label>
 
         <div class="actions"><button class="btn" type="submit"><i class="fa-solid fa-floppy-disk"></i>Salvar</button></div>

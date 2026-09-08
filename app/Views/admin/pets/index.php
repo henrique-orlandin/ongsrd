@@ -1,5 +1,6 @@
 <?= $this->extend('admin/layouts/main') ?>
 <?= $this->section('content') ?>
+<?php helper('pet'); ?>
 <?php $items = $items ?? []; ?>
 <section class="panel">
     <div class="panel-head">
@@ -14,7 +15,7 @@
                 <td><?php if ($row['thumbnail']): ?><img src="<?= base_url(esc($row['thumbnail'])) ?>" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;"><?php endif; ?></td>
                 <td><?= esc((string) $row['name']) ?></td>
                 <td><?= esc((string) $row['type']) ?></td>
-                <td><?= esc((string) $row['age']) ?></td>
+                <td><?= esc(pet_age_label((int) $row['age'], (string) ($row['age_unit'] ?? 'years'))) ?></td>
                 <td><?= esc((string) $row['size']) ?></td>
                 <td><?= esc((string) $row['gender']) ?></td>
                 <td class="actions">

@@ -22,18 +22,22 @@ class PetController extends BaseController
         if ($size !== '')   { $builder->where('size', $size); }
         if ($gender !== '') { $builder->where('gender', $gender); }
 
+        // Age is stored as a plain number plus a unit (years|months), so filtering/sorting
+        // by age has to compare everyone on the same scale — months.
+        $ageInMonths = "CASE WHEN age_unit = 'months' THEN age ELSE age * 12 END";
+
         match ($age) {
-            'filhote' => $builder->where('age <=', 1),
-            'jovem'   => $builder->where('age >=', 1)->where('age <=', 3),
-            'adulto'  => $builder->where('age >', 3)->where('age <=', 8),
-            'idoso'   => $builder->where('age >', 8),
+            'filhote' => $builder->where("({$ageInMonths}) <=", 12, false),
+            'jovem'   => $builder->where("({$ageInMonths}) >=", 12, false)->where("({$ageInMonths}) <=", 36, false),
+            'adulto'  => $builder->where("({$ageInMonths}) >", 36, false)->where("({$ageInMonths}) <=", 96, false),
+            'idoso'   => $builder->where("({$ageInMonths}) >", 96, false),
             default   => null,
         };
 
         match ($sort) {
             'name'    => $builder->orderBy('name', 'ASC'),
-            'younger' => $builder->orderBy('age', 'ASC'),
-            'older'   => $builder->orderBy('age', 'DESC'),
+            'younger' => $builder->orderBy("({$ageInMonths})", 'ASC', false),
+            'older'   => $builder->orderBy("({$ageInMonths})", 'DESC', false),
             default   => $builder->orderBy('created_at', 'DESC'),
         };
 

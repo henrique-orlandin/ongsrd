@@ -86,6 +86,8 @@
     width: 100%;
     max-height: 520px;
     overflow: hidden;
+    border-radius: 1.25rem;
+    margin: 0 0 2rem;
 }
 
 .news-detail-hero img {
@@ -127,7 +129,9 @@
 
 .news-detail-content p { margin: 0 0 1.1rem; }
 .news-detail-content h2,
-.news-detail-content h3 { margin: 1.6rem 0 0.7rem; }
+.news-detail-content h3 { margin: 3rem 0 1.5rem; }
+.news-detail-content h2 { font-size: clamp(1.8rem, 5vw, 2rem); }
+.news-detail-content h3 { font-size: clamp(1.6rem, 5vw, 1.8rem); }
 .news-detail-content img { border-radius: 10px; margin: 1rem 0; }
 .news-detail-content a { color: var(--brand); }
 

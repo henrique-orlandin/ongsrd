@@ -12,12 +12,6 @@ $mainImage = $mainImage ?? null;
 ?>
 
 <article class="news-detail-page">
-    <?php if ($mainImage !== null): ?>
-        <div class="news-detail-hero">
-            <img src="<?= base_url(esc($mainImage, 'attr')) ?>" alt="<?= esc((string) $news['title']) ?>" loading="eager">
-        </div>
-    <?php endif; ?>
-
     <div class="container news-detail-body">
         <nav class="breadcrumb" aria-label="Caminho">
             <a href="<?= base_url('/') ?>">Início</a>
@@ -26,7 +20,7 @@ $mainImage = $mainImage ?? null;
             <span aria-hidden="true">›</span>
             <span><?= esc((string) $news['title']) ?></span>
         </nav>
-
+        
         <header class="news-detail-header">
             <?php if (! empty($news['published_at'])): ?>
                 <time class="news-detail-date" datetime="<?= esc((string) $news['published_at']) ?>">
@@ -36,6 +30,14 @@ $mainImage = $mainImage ?? null;
             <h1><?= esc((string) $news['title']) ?></h1>
         </header>
 
+        <?php if ($mainImage !== null): ?>
+            <figure class="news-detail-hero">
+                <picture> 
+                    <img src="<?= base_url(esc($mainImage, 'attr')) ?>" alt="<?= esc((string) $news['title']) ?>" loading="eager">
+                </picture>
+            </figure>
+        <?php endif; ?>
+            
         <div class="news-detail-content">
             <?= $news['description'] ?>
         </div>
